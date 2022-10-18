@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: m4-sprint6-segunda-atividade-resolvendo_bugs-postgres
+    image: postgres:14.2-alpine
+    ports:
+      - 5432:5432
+    env_file:
+      - ./.env
+    
+  
+  node:
+    container_name: m4-sprint6-segunda-atividade-resolvendo_bugs-node
+    build: ./
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/app/:rw
+    environment:
+      - IS_COMPOSE=true
