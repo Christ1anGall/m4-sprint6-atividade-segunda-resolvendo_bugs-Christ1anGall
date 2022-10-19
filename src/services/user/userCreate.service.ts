@@ -1,44 +1,46 @@
-import { IUserCreate } from "../../interfaces/user";
 import { AppDataSource } from "../../data-source";
 import { User } from "../../entities/user.entity";
-import { hash } from "bcrypt";
+import { hashSync } from "bcrypt";
 import { AppError } from "../../errors/appError";
 import { Cart } from "../../entities/cart.entity";
+import { IUserCreate } from "../../interfaces/user";
 
-const userCreateService = async ({name, email, password}: IUserCreate) => {
+const userCreateService = async ({ name, email, password }: IUserCreate) => {
+  const userRepository = AppDataSource.getRepository(User);
+  const cartRepository = AppDataSource.getRepository(Cart);
 
-    const userRepository = AppDataSource.getRepository(User) 
-    const cartRepository = AppDataSource.getRepository(Cart)
+  const emailAlreadyExists = await userRepository.findOne({
+    where: {
+      email,
+    },
+  });
 
-    const emailAlreadyExists = await userRepository.findOne({
-        where: {
-            email
-        }
-    })
+  if (emailAlreadyExists) {
+    throw new AppError(409, "Email already exists");
+  }
 
-    if (emailAlreadyExists) {
-        throw new AppError(409, "Email already exists")
-    }
+  const cart = new Cart();
 
-    const cart = cartRepository.create({
-        subtotal: 0
-    })
+  cart.subtotal = 0;
 
-    const [ hashedPassword ] = await Promise.all([
-        hash(password, 10),
-        cartRepository.save(cart)
-    ])
+  cartRepository.create(cart);
 
-    const user = userRepository.create({
-        name,
-        email,
-        password: hashedPassword,
-        cart
-    })
-    
-    await userRepository.save(user)
+  cartRepository.save(cart);
 
-    return user
-}
+  const hashedPassword = hashSync(password, 10);
 
-export default userCreateService
+  const user = new User();
+
+  user.name = name;
+  user.email = email;
+  user.password = hashedPassword;
+  user.cart = cart;
+
+  userRepository.create();
+
+  await userRepository.save(user);
+
+  return user;
+};
+
+export default userCreateService;

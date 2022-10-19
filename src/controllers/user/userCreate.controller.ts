@@ -1,19 +1,19 @@
-import { Request, Response } from 'express'
-import userCreateService from '../../services/user/userCreate.service'
-
+import { Request, Response } from "express";
+import { IUserCreate } from "../../interfaces/user";
+import userCreateService from "../../services/user/userCreate.service";
 
 const userCreateController = async (req: Request, res: Response) => {
-    const {name, email, password} = req.body
+  const { name, email, password }: IUserCreate = req.body;
 
-    if(!name || !email || !password){
-        return res.status(400).json({
-            message: "Following fields are required: name, email & password."
-        })
-    }
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      message: "Following fields are required: name, email & password.",
+    });
+  }
 
-    const newUser =  await userCreateService({name, email, password})
-    
-    return res.status(201).send(newUser)
-}
+  const newUser = await userCreateService({ name, email, password });
 
-export default userCreateController
+  return res.status(201).send(newUser);
+};
+
+export default userCreateController;
